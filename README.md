@@ -63,3 +63,70 @@ file is ignored by Git. Never put secrets in your Python code.
 
 Official deployment guide:
 https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy
+
+## BigQuery connection and SQL extraction
+
+1. Enable the **BigQuery API** in your Google Cloud project.
+2. Create a service account with **BigQuery Job User** on your project and
+   **BigQuery Data Viewer** on the datasets you need. Download its JSON key
+   somewhere outside this repository.
+3. Copy the secrets template:
+
+   ```powershell
+   Copy-Item .streamlit\secrets.toml.example .streamlit\secrets.toml
+   ```
+
+4. Replace the placeholders with values from the JSON key. Keep the private
+   key's `\n` escapes. **Never commit the key or populated secrets file.**
+5. Install dependencies:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   ```
+
+6. For deployment, paste the populated TOML into your Streamlit app's
+   **Secrets** settings. Restart the app if you change credentials.
+
+SQL and data loading live in [st_utilities.py](st_utilities.py).
+[streamlit_app.py](streamlit_app.py) calls the helper and displays the results:
+
+```python
+from st_utilities import get_forest_data
+
+data = get_forest_data()
+st.dataframe(data, hide_index=True)
+```
+
+`get_bigquery_client()` connects; `run_query(sql)` returns a pandas DataFrame.
+Results are cached for ten minutes and shared across viewers, so use only data
+all viewers may see. Keep SQL in your code; do not insert user input into SQL.
+Errors are raised normally.
+
+Each query has a **2 GB billing limit**. BigQuery can still charge for repeated
+queries even though Streamlit hosting is free. `LIMIT` does not cap bytes scanned.
+The forest query returns up to 1,000 records with all 15 original columns,
+joining the plot, condition, and tree tables with the original year and water
+filters.
+
+## Forest Explorer interface
+
+The species dropdown loads distinct, nonblank common names from BigQuery when
+the page opens, using the existing ten-minute query cache. The three tabs run
+their analysis queries when their form button is clicked:
+
+- **Species density:** choose a state and a species from the database.
+  A heatmap weights each plot location by its recorded tree count.
+- **Water and shade:** select a state and minimum tree height in feet.
+  The map shows plots reporting water and living trees meeting the height filter.
+- **State forest health:** select a state to see average height, observation
+  counts, observations per plot survey, and living/dead shares. Other/unknown
+  tree status is counted separately.
+
+These features include inventory years **2000 onward**, through the latest
+available data. They count historical observations, including repeat surveys,
+not unique living trees today or estimated trees per acre. The original
+`get_forest_data()` test query remains available separately.
+
+Coordinates are approximate for privacy. Water codes do not measure distance
+to a lake or stream, and tall trees do not guarantee shade. These maps are for
+education, not navigation or verified campsite recommendations.

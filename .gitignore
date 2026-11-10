@@ -6,4 +6,6 @@ __pycache__/
 .env.*
 !.env.example
 .streamlit/secrets.toml
+*service-account*.json
+stalwart-topic-349314-0047a5f97410.json
 .vscode/
