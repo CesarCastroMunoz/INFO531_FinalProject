@@ -88,14 +88,7 @@ https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deplo
    **Secrets** settings. Restart the app if you change credentials.
 
 SQL and data loading live in [st_utilities.py](st_utilities.py).
-[streamlit_app.py](streamlit_app.py) calls the helper and displays the results:
-
-```python
-from st_utilities import get_forest_data
-
-data = get_forest_data()
-st.dataframe(data, hide_index=True)
-```
+[streamlit_app.py](streamlit_app.py) calls its helpers and displays the results.
 
 `get_bigquery_client()` connects; `run_query(sql)` returns a pandas DataFrame.
 Results are cached for ten minutes and shared across viewers, so use only data
@@ -104,9 +97,6 @@ Errors are raised normally.
 
 Each query has a **2 GB billing limit**. BigQuery can still charge for repeated
 queries even though Streamlit hosting is free. `LIMIT` does not cap bytes scanned.
-The forest query returns up to 1,000 records with all 15 original columns,
-joining the plot, condition, and tree tables with the original year and water
-filters.
 
 ## Forest Explorer interface
 
@@ -124,8 +114,7 @@ their analysis queries when their form button is clicked:
 
 These features include inventory years **2000 onward**, through the latest
 available data. They count historical observations, including repeat surveys,
-not unique living trees today or estimated trees per acre. The original
-`get_forest_data()` test query remains available separately.
+not unique living trees today or estimated trees per acre.
 
 Coordinates are approximate for privacy. Water codes do not measure distance
 to a lake or stream, and tall trees do not guarantee shade. These maps are for

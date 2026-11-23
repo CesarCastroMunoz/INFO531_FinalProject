@@ -61,50 +61,6 @@ def get_species_names() -> list[str]:
     return run_query(sql)["species"].tolist()
 
 
-def get_forest_data() -> pd.DataFrame:
-    """Load up to 1,000 tree records from plots with water present, 1968-2020."""
-    sql = """
-    SELECT
-        -- Plot location and temporal data
-        p.plot_sequence_number AS plot_id,
-        p.plot_state_code AS state_code,
-        p.latitude,
-        p.longitude,
-        p.elevation,
-        p.plot_inventory_year AS inventory_year,
-        p.water_on_plot_code AS water_proximity,
-
-        -- Land condition data
-        c.condition_status_code AS land_condition_status,
-
-        -- Individual tree metrics
-        t.tree_sequence_number AS tree_id,
-        t.tree_status_code AS tree_status_alive_or_dead,
-        t.total_height AS tree_height,
-        t.current_diameter AS tree_diameter,
-
-        -- Species data
-        t.species_code,
-        t.species_common_name,
-        t.species_scientific_name
-    FROM
-        `bigquery-public-data.usfs_fia.plot` AS p
-    JOIN
-        `bigquery-public-data.usfs_fia.condition` AS c
-        ON p.plot_sequence_number = c.plot_sequence_number
-    JOIN
-        `bigquery-public-data.usfs_fia.tree` AS t
-        ON p.plot_sequence_number = t.plot_sequence_number
-        AND c.condition_class_number = t.condition_class_number
-    WHERE
-        p.plot_inventory_year BETWEEN 1968 AND 2020
-        -- Only include plots where water is present.
-        AND p.water_on_plot_code > 0
-    LIMIT 1000;
-    """
-    return run_query(sql)
-
-
 def get_species_density(state_code: int, species: str) -> pd.DataFrame:
     """Count recorded trees by plot location for a selected species."""
     sql = """
